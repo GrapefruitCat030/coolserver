@@ -74,16 +74,6 @@ int main(){
     return 0;    
 }
 
-            // 这里是server主动回应，很笨
-            // errif(fgets(wr_buff, sizeof(wr_buff), stdin) == NULL, "server input");
-            // size_t len = strlen(wr_buff); // 移除换行符（如果存在）
-            // if (len > 0 && wr_buff[len - 1] == '\n') wr_buff[len - 1] = '\0';    
-            // ssize_t write_bytes = write(conn_sockfd, &wr_buff, sizeof(wr_buff));
-            // if(write_bytes == -1) {
-            //     errif(true, "write buffer");
-            //     break;
-            // }
-
 
 int handleEvent(int conn_sockfd) {
 
