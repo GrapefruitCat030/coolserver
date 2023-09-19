@@ -5,75 +5,60 @@
 #include<unistd.h>
 #include<errno.h>
 
-
 #include<sys/socket.h>
 #include<netinet/ip.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include<sys/epoll.h>
 
+#include<vector>
 
 #include "test-util.h"
-
-
-
-// Can be set to SOMAXCONN, determined by the system.
-#define MAXIMUM_CONNECT 10
-#define MAX_EVENTS      100
-
-
+#include "Inetaddress.h"
+#include "Socket.h"
+#include "Epoll.h"
 
 int handleEvent(int conn_sockfd);
 
-
 int main(){
+    Socket *server_socket    = new Socket();
+    Inetaddress *server_addr = new Inetaddress("127.0.0.1", 9999); 
+    server_socket->s_bind(server_addr);
+    server_socket->s_listen();
 
-    int server_sockfd = socket(AF_INET, SOCK_STREAM, 0);  errif(server_sockfd <= 0, "server socket opening");
-
-    struct sockaddr_in ser_sa;
-    memset(&ser_sa, 0, sizeof(ser_sa));
-    ser_sa.sin_family      = AF_INET;
-    ser_sa.sin_port        = htons(9999);
-    ser_sa.sin_addr.s_addr = inet_addr("127.0.0.1"); assert(ser_sa.sin_addr.s_addr != INADDR_NONE); 
-    
-    errif(bind(server_sockfd, (struct sockaddr *)&ser_sa, sizeof(ser_sa)) == -1, "binging error");
-    errif(listen(server_sockfd, MAXIMUM_CONNECT) == -1 , "listening error");    // the socket_fd should have the type of SOCK_STREAM or SOCK_SEQPACKET.
-
-    int eplist_fd = epoll_create1(0);  errif(eplist_fd == -1, "epoll_create");
-    struct epoll_event temp_event, ready_events[MAX_EVENTS]; 
-    temp_event.events  = EPOLLIN;        // the listen socket uses LT mode.
-    temp_event.data.fd = server_sockfd;
-    errif(epoll_ctl(eplist_fd, EPOLL_CTL_ADD, server_sockfd, &temp_event) == -1, "epoll_ctl");
+    Epoll *server_ep = new Epoll();
+    server_ep->ctl_add(server_socket->getfd(), EPOLLIN);
 
     while(true) {
+        std::vector<struct epoll_event> active_events = server_ep->poll();
+        int nfds = active_events.size();
+        for(struct epoll_event ev : active_events) {
+            if(ev.data.fd == server_socket->getfd()) {
 
-        int nfds = epoll_wait(eplist_fd, ready_events, MAX_EVENTS, -1);  errif(nfds == -1, "epoll_wait"); 
-        for(int i = 0; i < nfds; i++) {
-            // the listen_sock is ready for the connecting.
-            if(ready_events[i].data.fd == server_sockfd) {
-                struct sockaddr_in cli_sa;
-                socklen_t cli_sa_len = sizeof(cli_sa);
-                memset(&cli_sa, 0, sizeof(cli_sa));
-                int conn_sockfd = accept(server_sockfd, (struct sockaddr *)&cli_sa, &cli_sa_len);  errif(conn_sockfd == -1, "accept socket");
+                Inetaddress *conn_addr = new Inetaddress();               // TODO: Memory leak
+                int conn_fd = server_socket->s_accept(conn_addr); 
 
-                printf("new client fd %d! IP: %s Port: %d\n", conn_sockfd, inet_ntoa(cli_sa.sin_addr), ntohs(cli_sa.sin_port));
+                printf("new client fd %d! IP: %s Port: %d\n",\
+                        conn_fd, inet_ntoa(conn_addr->sock_addr.sin_addr), ntohs(conn_addr->sock_addr.sin_port));
+              
+                Socket *conn_socket = new Socket(conn_fd); // TODO: Memory leak
+                conn_socket->s_setnonblocking();
+                server_ep->ctl_add(conn_socket->getfd(), EPOLLIN | EPOLLET);
 
-                setnoblocking(conn_sockfd);             // non-blocking for connection socket,
-                temp_event.events  = EPOLLIN | EPOLLET; // used with ET mode.
-                temp_event.data.fd = conn_sockfd;
-                errif(epoll_ctl(eplist_fd, EPOLL_CTL_ADD, conn_sockfd, &temp_event) == -1, "conn_sock epoll_ctl");
-
-            } else if(ready_events[i].events & EPOLLIN) { 
-                // the connect_sock has data for reading.
-                handleEvent(ready_events[i].data.fd);
+            } else if(ev.events & EPOLLIN) {
+                // the connect_socket has data for reading.
+                handleEvent(ev.data.fd);
+            } else {
+                // something events that are not EPOLLIN. TODO.
             }
         }
-
-
     }
-    return 0;    
-}
 
+    delete server_socket;
+    delete server_ep;
+
+    return 0;
+}
 
 int handleEvent(int conn_sockfd) {
 
@@ -117,12 +102,4 @@ int handleEvent(int conn_sockfd) {
     }
     return 0;
 }
-
-
-
-
-
-
-
-
 

@@ -19,7 +19,7 @@ void errif(bool condition, const char *errmsg);
     Add the O_NONBLOCK flag to the fd.
     the return-value is the old option value of fd, offering recovery.
 */
-int setnoblocking(int fd); 
+int setnonblocking(int fd); 
 
 
 
