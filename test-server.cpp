@@ -17,6 +17,8 @@
 #include "Inetaddress.h"
 #include "Socket.h"
 #include "Epoll.h"
+#include "Channel.h"
+
 
 int handleEvent(int conn_sockfd);
 
@@ -27,13 +29,17 @@ int main(){
     server_socket->s_listen();
 
     Epoll *server_ep = new Epoll();
-    server_ep->ctl_add(server_socket->getfd(), EPOLLIN);
+    // server_ep->simple_add(server_socket->getfd(), EPOLLIN);
+    Channel *server_chan = new Channel(server_socket->getfd(), EPOLLIN);
+    server_ep->channel_update(server_chan);
+    
 
     while(true) {
-        std::vector<struct epoll_event> active_events = server_ep->poll();
-        int nfds = active_events.size();
-        for(struct epoll_event ev : active_events) {
-            if(ev.data.fd == server_socket->getfd()) {
+        // std::vector<struct epoll_event> active_events = server_ep->poll();
+        std::vector<Channel *> active_channels = server_ep->chan_poll();
+        int nfds = active_channels.size();
+        for(Channel *chan : active_channels) {
+            if(chan->getFd() == server_socket->getfd()) {
 
                 Inetaddress *conn_addr = new Inetaddress();               // TODO: Memory leak
                 int conn_fd = server_socket->s_accept(conn_addr); 
@@ -43,11 +49,13 @@ int main(){
               
                 Socket *conn_socket = new Socket(conn_fd); // TODO: Memory leak
                 conn_socket->s_setnonblocking();
-                server_ep->ctl_add(conn_socket->getfd(), EPOLLIN | EPOLLET);
+                // server_ep->simple_add(conn_socket->getfd(), EPOLLIN | EPOLLET);
+                Channel *conn_chan = new Channel(conn_socket->getfd(), EPOLLIN | EPOLLET);
+                server_ep->channel_update(conn_chan);
 
-            } else if(ev.events & EPOLLIN) {
+            } else if(chan->getReop() & EPOLLIN) {
                 // the connect_socket has data for reading.
-                handleEvent(ev.data.fd);
+                handleEvent(chan->getFd());
             } else {
                 // something events that are not EPOLLIN. TODO.
             }
