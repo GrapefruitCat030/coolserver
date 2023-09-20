@@ -44,7 +44,7 @@ void Epoll::channel_update(Channel *chan) {
     ev.data.ptr = (void *)chan; 
 
     // The channel is in this eplist. modify it.    
-    if(chan->isInEP(this)) {
+    if(chan->isInEP()) {
         errif(epoll_ctl(eplist_fd, EPOLL_CTL_MOD, chan->getFd(), &ev) == -1, \
                 "epoll modchannel");
     }
@@ -52,7 +52,7 @@ void Epoll::channel_update(Channel *chan) {
     else {
         errif(epoll_ctl(eplist_fd, EPOLL_CTL_ADD, chan->getFd(), &ev) == -1, \
                 "epoll addchannel");
-        chan->setInEP(this);
+        chan->setInEP();
     } 
 }
 

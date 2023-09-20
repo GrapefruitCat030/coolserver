@@ -1,15 +1,38 @@
+CXX = g++
+# 添加任何必要的编译选项
+CFLAGS = -Wall -g
 
-CFLAG := -g3
+# 源文件和目标文件列表
+SRCDIR = src
+OBJDIR = obj
+SRCS = $(wildcard $(SRCDIR)/*.cpp)
+OBJS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
+TARGETS = test-server test-client
 
-.PHONY: server
+# 默认目标
+all: $(TARGETS)
 
-server: test-server test-client
+# test-server的编译规则
+test-server: $(OBJS) $(OBJDIR)/test-server.o
+	$(CXX) $(CFLAGS) $(OBJS) $(OBJDIR)/test-server.o -o $@
 
-test-server: test-util.cpp Channel.cpp Epoll.cpp Socket.cpp Inetaddress.cpp test-server.cpp
-	g++ $(CFLAG) test-util.cpp Channel.cpp Epoll.cpp Socket.cpp Inetaddress.cpp test-server.cpp -o test-server
+# test-client的编译规则
+test-client: $(OBJS) $(OBJDIR)/test-client.o
+	$(CXX) $(CFLAGS) $(OBJS) $(OBJDIR)/test-client.o -o $@
 
-test-client: test-util.cpp Socket.cpp Inetaddress.cpp test-client.cpp
-	g++ $(CFLAG) test-util.cpp Socket.cpp Inetaddress.cpp test-client.cpp -o test-client
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CFLAGS) -c $< -o $@
 
+$(OBJDIR)/test-server.o: test-server.cpp
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/test-client.o: test-client.cpp
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+# 清理规则
 clean:
-	rm -f ./test-server ./test-client
+	rm -f $(OBJS)  $(OBJDIR)/*.o $(TARGET)
+
+
+# 伪目标，用于防止与同名文件冲突
+.PHONY: all clean

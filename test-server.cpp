@@ -13,11 +13,11 @@
 
 #include<vector>
 
-#include "test-util.h"
-#include "Inetaddress.h"
-#include "Socket.h"
-#include "Epoll.h"
-#include "Channel.h"
+#include "src/test-util.h"
+#include "src/Inetaddress.h"
+#include "src/Socket.h"
+#include "src/Epoll.h"
+#include "src/Channel.h"
 
 
 int handleEvent(int conn_sockfd);
@@ -30,9 +30,8 @@ int main(){
 
     Epoll *server_ep = new Epoll();
     // server_ep->simple_add(server_socket->getfd(), EPOLLIN);
-    Channel *server_chan = new Channel(server_socket->getfd(), EPOLLIN);
-    server_ep->channel_update(server_chan);
-    
+    Channel *server_chan = new Channel(server_socket->getfd(), server_ep);
+    server_chan->watchReadingLT(); 
 
     while(true) {
         // std::vector<struct epoll_event> active_events = server_ep->poll();
@@ -50,8 +49,8 @@ int main(){
                 Socket *conn_socket = new Socket(conn_fd); // TODO: Memory leak
                 conn_socket->s_setnonblocking();
                 // server_ep->simple_add(conn_socket->getfd(), EPOLLIN | EPOLLET);
-                Channel *conn_chan = new Channel(conn_socket->getfd(), EPOLLIN | EPOLLET);
-                server_ep->channel_update(conn_chan);
+                Channel *conn_chan = new Channel(conn_socket->getfd(), server_ep);
+                conn_chan->watchReadingET();
 
             } else if(chan->getReop() & EPOLLIN) {
                 // the connect_socket has data for reading.

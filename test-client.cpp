@@ -8,9 +8,9 @@
 #include<netinet/in.h>
 #include<arpa/inet.h>
 
-#include "test-util.h"
-#include "Inetaddress.h"
-#include "Socket.h"
+#include "src/test-util.h"
+#include "src/Inetaddress.h"
+#include "src/Socket.h"
 
 
 int main(){

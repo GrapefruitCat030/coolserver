@@ -24,8 +24,12 @@ private:
     Epoll *ep;
     bool   is_inep;
 
+    // set new events option and return the old option. 
+    // TODO:设置完后应该使用epoll的chan_update更新吗？
+    uint32_t updateEvop(uint32_t evop);
+
 public:
-    Channel(int fd, uint32_t evop);
+    Channel(int fd, Epoll *ep);
     ~Channel();
 
     int getFd();
@@ -33,14 +37,15 @@ public:
     uint32_t getEvop();
     uint32_t getReop();
 
-    // set new events option and return the old option. 
-    // TODO:设置完后应该使用epoll的chan_update更新吗？
-    uint32_t updateEvop(uint32_t evop);
     // set new ready events option and return the old option.
     uint32_t setReop(uint32_t reop);
 
-    bool isInEP(Epoll *ep);
-    void setInEP(Epoll *ep); 
+    bool isInEP();
+    void setInEP(); 
+    
+    void watchReadingLT();
+    void watchReadingET();
+
 
 
     void *cb_func();
