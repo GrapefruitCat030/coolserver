@@ -6,12 +6,22 @@
     而是一个Channel数组，server可以根据各个Channel代表的文件描述符的事件需求，
     调用fd对应的callback function 进行业务处理。
 
+    注册过程包括：
+    1.初始化：fd和loop的指定；
+    2.回调函数绑定
+    3.具体事件（读准备、写准备）注册
+
+    Channel的注册在：
+    Server类实例化时（listen socket）
+    Listen socket 在 poll loop 中对客户端请求调用对应的回调函数（ accept ）时； 
+
 */
 
 #include<unistd.h>
 #include<stdint.h>
+#include<functional>
 
-
+class Eventloop;
 class Epoll;
 
 class Channel {
@@ -20,16 +30,16 @@ private:
     int fd;
     uint32_t evop;
     uint32_t ready_evop;
-    
-    Epoll *ep;
-    bool   is_inep;
+    std::function<void()> callback_func; // 函数更新于注册时
+
+    Eventloop *loop;
+    bool is_inep;
 
     // set new events option and return the old option. 
-    // TODO:设置完后应该使用epoll的chan_update更新吗？
     uint32_t updateEvop(uint32_t evop);
 
 public:
-    Channel(int fd, Epoll *ep);
+    Channel(int fd, Eventloop *loop);
     ~Channel();
 
     int getFd();
@@ -43,10 +53,12 @@ public:
     bool isInEP();
     void setInEP(); 
     
-    void watchReadingLT();
-    void watchReadingET();
+    void setCallbackfunc(std::function<void()> cb);    
+    void handleEvents();
 
-
-
-    void *cb_func();
+    /* Register the events. */
+    // 注册LT读准备事件
+    void watchReadingLT();  
+    // 注册LT读准备事件
+    void watchReadingET(); 
 };
