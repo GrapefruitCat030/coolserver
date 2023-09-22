@@ -1,5 +1,6 @@
 example/
 obj/
+.vscode/
 
 test-client
 test-server

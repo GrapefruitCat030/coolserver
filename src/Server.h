@@ -8,6 +8,7 @@
 
 class Socket;
 class Eventloop;
+class Acceptor;
 
 class Server {
 private:
@@ -15,7 +16,8 @@ private:
 
     //  服务器的事件请求队列
     Eventloop *server_loop;
-
+    // Acceptor module
+    Acceptor *server_accpetor;
 public:
     // 负责创建listen socket并注册到所属的事件表中
     Server(Eventloop *);

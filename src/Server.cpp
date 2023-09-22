@@ -4,48 +4,42 @@
 #include "Epoll.h"
 #include "Channel.h"
 #include "test-util.h"
+#include "Acceptor.h"
 
 #include <assert.h>
 #include <string.h>
 
 Server::Server(Eventloop *_loop) : server_loop(_loop){
-
-    Socket *server_socket    = new Socket();
-    Inetaddress *server_addr = new Inetaddress("127.0.0.1", 9999); 
-    server_socket->s_bind(server_addr);
-    server_socket->s_listen();
-
-    // 将listen socket注册进入loop请求队列，以Channel形式
-    Channel *server_chan = new Channel(server_socket->getfd(), server_loop);
-    std::function<void()> acpt_cbfunc = std::bind(&Server::accpet_connection, this, server_socket);
-    server_chan->setCallbackfunc(acpt_cbfunc);
-    server_chan->watchReadingLT(); 
+    server_accpetor = new Acceptor(_loop);
+    std::function<void()> acptor_cb  = std::bind(&Server::accpet_connection, this, server_accpetor->get_sersocket());
+    server_accpetor->set_acptconn_cb(acptor_cb);
 }
 
 Server::~Server() {
+    delete this->server_loop;
+    delete this->server_accpetor;
 }
 
 void Server::accpet_connection(Socket *server_socket) {
     Inetaddress *conn_addr = new Inetaddress();               // TODO: Memory leak
     int conn_fd = server_socket->s_accept(conn_addr); 
-
-    printf("new client fd %d! IP: %s Port: %d\n",\
-            conn_fd, inet_ntoa(conn_addr->sock_addr.sin_addr), ntohs(conn_addr->sock_addr.sin_port));
-    
     Socket *conn_socket = new Socket(conn_fd); // TODO: Memory leak
     conn_socket->s_setnonblocking();
     
+    printf("new client fd %d! IP: %s Port: %d\n",\
+            conn_fd, inet_ntoa(conn_addr->sock_addr.sin_addr), ntohs(conn_addr->sock_addr.sin_port));
+
     // 将connection socket注册进入loop请求队列，以Channel形式
     Channel *conn_chan = new Channel(conn_socket->getfd(), server_loop);
-    std::function<void()> hdle_cbfunc = std::bind(&Server::reading_handle, this, conn_fd);
-    conn_chan->setCallbackfunc(hdle_cbfunc);
+    std::function<void()> handle_cbfunc = std::bind(&Server::reading_handle, this, conn_fd);
+    conn_chan->setCallbackfunc(handle_cbfunc);
     conn_chan->watchReadingET();
 }
 
 void Server::reading_handle(int conn_sockfd) {
 
+    char rd_buff[1024], wr_buff[1024];
     while(true) {
-        char rd_buff[1024], wr_buff[1024];
         memset(rd_buff, 0, sizeof(rd_buff));
         memset(wr_buff, 0, sizeof(wr_buff));
         
