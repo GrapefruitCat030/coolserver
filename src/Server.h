@@ -6,9 +6,13 @@
     包含各种业务处理函数，如listen socket的connect业务、其余socket的正常处理业务
 */
 
+#include<map>
+
 class Socket;
+class Inetaddress;
 class Eventloop;
 class Acceptor;
+class Connection;
 
 class Server {
 private:
@@ -18,14 +22,17 @@ private:
     Eventloop *server_loop;
     // Acceptor module
     Acceptor *server_accpetor;
+    // Connections pool
+    std::map<int, Connection*> connections_pool;
+
 public:
     // 负责创建listen socket并注册到所属的事件表中
     Server(Eventloop *);
     ~Server();
 
-    /* handle function*/
-    void accpet_connection(Socket *server_sock);
-    void reading_handle(int conn_sockfd);
-
+    /* connection handle function*/
+    
+    void add_connection(Socket *conn_socket, Inetaddress *conn_addr);
+    void del_connection(Socket *conn_socket);
 
 };

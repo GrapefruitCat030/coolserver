@@ -2,17 +2,21 @@
 
 #include<functional>
 
-class Eventloop;
 class Socket;
 class Inetaddress;
+class Eventloop;
+class Channel;
 
 class Acceptor {
 private:
     /* data */
-    Eventloop   *server_loop;
     Socket      *server_socket;
     Inetaddress *server_addr;
-    std::function<void()> accept_connection_cb;
+    
+    Eventloop   *server_loop;
+    Channel     *acpt_chan;
+
+    std::function<void(Socket*, Inetaddress*)> add_connection_cb;
 
 public:
     Acceptor(Eventloop *_loop);
@@ -21,6 +25,17 @@ public:
     Socket*      get_sersocket();
     Inetaddress* get_inetaddr();
 
-    void set_acptconn_cb(std::function<void()> cb);
+    /* 
+        function handling the events.
+        Offer binding for the acpt Channel.
+    */
+
     void accept_connection();
+    
+    /*
+        setting the valiable.
+        Called in Server after the Acceptor instance created.
+    */
+    
+    void set_addconn_cb(std::function<void(Socket*, Inetaddress*)> cb);
 };

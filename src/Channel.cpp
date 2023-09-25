@@ -6,44 +6,45 @@ Channel::Channel(int _fd, Eventloop *_loop): \
                 fd(_fd), loop(_loop) {
                 evop       = 0;
                 ready_evop = 0;
-                is_inep    = false;
+                inep_flag  = false;
 }
+Channel::~Channel() {}
 
-uint32_t Channel::updateEvop(uint32_t evop) {
-    uint32_t old_op = getEvop();
+uint32_t Channel::update_Evop(uint32_t evop) {
+    uint32_t old_op = get_Evop();
     this->evop = evop;
     loop->channel_update(this);
     return old_op;
 }
 
-bool Channel::isInEP()  { return is_inep; }
-void Channel::setInEP() { is_inep = true; }
+bool Channel::is_inEP()  { return inep_flag; }
+void Channel::set_inEP() { inep_flag = true; }
 
-int Channel::getFd() { return fd;}
+int Channel::get_fd() { return fd;}
 
-uint32_t Channel::getEvop() { return evop;      }
-uint32_t Channel::getReop() { return ready_evop;}
+uint32_t Channel::get_Evop() { return evop;      }
+uint32_t Channel::get_Reop() { return ready_evop;}
 
-uint32_t Channel::setReop(uint32_t reop) {
-    uint32_t old_op = getReop();
+uint32_t Channel::set_Reop(uint32_t reop) {
+    uint32_t old_op = get_Reop();
     this->ready_evop = reop;
     return old_op;
 }
 
 /* Set the callback function. */
 
-void Channel::setCallbackfunc(std::function<void()> cb) {
+void Channel::set_callbackfunc(std::function<void()> cb) {
     callback_func = cb;
 }
-void Channel::handleEvents() {
+void Channel::handle_events() {
     callback_func();   
 }
 
 /* Register the events. */
 
-void Channel::watchReadingLT() { 
-    updateEvop(EPOLLIN);
+void Channel::watch_readingLT() { 
+    update_Evop(EPOLLIN);
 }
-void Channel::watchReadingET() {
-    updateEvop(EPOLLIN | EPOLLET);
+void Channel::watch_readingET() {
+    update_Evop(EPOLLIN | EPOLLET);
 }

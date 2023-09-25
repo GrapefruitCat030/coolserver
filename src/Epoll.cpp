@@ -40,19 +40,19 @@ void Epoll::channel_update(Channel *chan) {
 
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
-    ev.events   = chan->getEvop();
+    ev.events   = chan->get_Evop();
     ev.data.ptr = (void *)chan; 
 
     // The channel is in this eplist. modify it.    
-    if(chan->isInEP()) {
-        errif(epoll_ctl(eplist_fd, EPOLL_CTL_MOD, chan->getFd(), &ev) == -1, \
+    if(chan->is_inEP()) {
+        errif(epoll_ctl(eplist_fd, EPOLL_CTL_MOD, chan->get_fd(), &ev) == -1, \
                 "epoll modchannel");
     }
     // Else, add the channel to the eplist.
     else {
-        errif(epoll_ctl(eplist_fd, EPOLL_CTL_ADD, chan->getFd(), &ev) == -1, \
+        errif(epoll_ctl(eplist_fd, EPOLL_CTL_ADD, chan->get_fd(), &ev) == -1, \
                 "epoll addchannel");
-        chan->setInEP();
+        chan->set_inEP();
     } 
 }
 
@@ -73,7 +73,7 @@ std::vector<Channel *> Epoll::chan_poll(int timeout) {
             "epoll wait");
     for(int i = 0; i < nfds; i++) {
         Channel *temp = (Channel *)ready_events[i].data.ptr;
-        temp->setReop(ready_events[i].events); 
+        temp->set_Reop(ready_events[i].events); 
         active_channels.push_back(temp);
     }
     return active_channels;

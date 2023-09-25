@@ -1,10 +1,11 @@
 CXX = g++
 # 添加任何必要的编译选项
 CFLAGS = -Wall -g
+SANITISER = 
 
 # 源文件和目标文件列表
 SRCDIR = src
-OBJDIR = obj
+OBJDIR = build
 SRCS = $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 TARGETS = test-server test-client
@@ -14,11 +15,11 @@ all: $(TARGETS)
 
 # test-server的编译规则
 test-server: $(OBJS) $(OBJDIR)/test-server.o
-	$(CXX) $(CFLAGS) $(OBJS) $(OBJDIR)/test-server.o -o $@
+	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-server.o -o $@
 
 # test-client的编译规则
 test-client: $(OBJS) $(OBJDIR)/test-client.o
-	$(CXX) $(CFLAGS) $(OBJS) $(OBJDIR)/test-client.o -o $@
+	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-client.o -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CFLAGS) -c $< -o $@

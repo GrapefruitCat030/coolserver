@@ -3,21 +3,21 @@
 #include "Channel.h"
 
 
-Eventloop::Eventloop() {
+Eventloop::Eventloop() : loop_over(false) {
     loop_ep = new Epoll();
 }
 Eventloop::~Eventloop() {
     delete this->loop_ep;
 }
 
-
+void Eventloop::setover() { loop_over = true;}
 
 void Eventloop::bootloop() {
     
     while (!loop_over) {
         std::vector<Channel *> active_channels = loop_ep->chan_poll();
         for(Channel *chan : active_channels) {
-            chan->handleEvents();
+            chan->handle_events();
         }
     }
 

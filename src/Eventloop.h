@@ -19,7 +19,8 @@ private:
 public:
     Eventloop();
     ~Eventloop();
-    
+
+    void setover();
     void bootloop();
     
     // 注意这个update函数并不由Eventloop类在外头亲自调用，

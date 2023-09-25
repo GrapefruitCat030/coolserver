@@ -33,32 +33,32 @@ private:
     std::function<void()> callback_func; // 函数更新于注册时
 
     Eventloop *loop;
-    bool is_inep;
+    bool inep_flag;
 
     // set new events option and return the old option. 
-    uint32_t updateEvop(uint32_t evop);
+    uint32_t update_Evop(uint32_t evop);
 
 public:
     Channel(int fd, Eventloop *loop);
     ~Channel();
 
-    int getFd();
+    int get_fd();
 
-    uint32_t getEvop();
-    uint32_t getReop();
+    uint32_t get_Evop();
+    uint32_t get_Reop();
 
     // set new ready events option and return the old option.
-    uint32_t setReop(uint32_t reop);
+    uint32_t set_Reop(uint32_t reop);
 
-    bool isInEP();
-    void setInEP(); 
+    bool is_inEP();
+    void set_inEP(); 
     
-    void setCallbackfunc(std::function<void()> cb);    
-    void handleEvents();
+    void set_callbackfunc(std::function<void()> cb);    
+    void handle_events();
 
     /* Register the events. */
     // 注册LT读准备事件
-    void watchReadingLT();  
+    void watch_readingLT();  
     // 注册LT读准备事件
-    void watchReadingET(); 
+    void watch_readingET(); 
 };

@@ -1,5 +1,5 @@
 example/
-obj/
+build/
 .vscode/
 
 test-client
