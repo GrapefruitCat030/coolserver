@@ -59,6 +59,6 @@ public:
     /* Register the events. */
     // 注册LT读准备事件
     void watch_readingLT();  
-    // 注册LT读准备事件
+    // 注册ET读准备事件
     void watch_readingET(); 
 };

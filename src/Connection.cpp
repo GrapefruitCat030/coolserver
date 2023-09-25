@@ -3,14 +3,19 @@
 #include "Socket.h"
 #include "Inetaddress.h"
 #include "Channel.h"
+#include "Buffer.h"
 #include "test-util.h"
 
 #include<string.h>
 #include<assert.h>
 
+#define BUFFER_SIZE 8
 
 Connection::Connection(Eventloop *_loop, Socket *socket, Inetaddress *addr):\
                     conn_socket(socket), conn_addr(addr), server_loop(_loop) {
+
+    work_recvbuffer = new Buffer();
+    work_sendbuffer = new Buffer();
 
     // 将connection socket注册进入loop请求队列，以Channel形式
     conn_chan = new Channel(conn_socket->getfd(), server_loop);
@@ -23,6 +28,8 @@ Connection::~Connection() {
     delete this->conn_socket;
     delete this->conn_addr;
     delete this->conn_chan;
+    delete this->work_recvbuffer;
+    delete this->work_sendbuffer;
 }
 
 
@@ -35,22 +42,17 @@ void Connection::set_delconn_cb(std::function<void()> cb) {
 
 void Connection::reading_echo() {
     int conn_sockfd = conn_socket->getfd();
-    char rd_buff[1024], wr_buff[1024];
+    char temp_buf[BUFFER_SIZE];
+    
     while(true) {
-        memset(rd_buff, 0, sizeof(rd_buff));
-        memset(wr_buff, 0, sizeof(wr_buff));
+        memset(temp_buf, 0, sizeof(temp_buf));
         
-        ssize_t read_bytes = recv(conn_sockfd, rd_buff, sizeof(rd_buff), 0);
+        ssize_t read_bytes = recv(conn_sockfd, temp_buf, sizeof(temp_buf), 0);
 
         if(read_bytes > 0) {
             // process the data normally.
-            printf("client %d: %s\n", conn_sockfd, rd_buff);
-            memcpy(wr_buff, rd_buff, sizeof(wr_buff)); 
-            ssize_t write_bytes = send(conn_sockfd, wr_buff, sizeof(wr_buff), 0);
-            if(write_bytes == -1) {
-                errif(true, "write buffer");
-                break;
-            }
+            work_recvbuffer->buf_append(temp_buf, read_bytes);
+
         } else if (read_bytes == 0) {
             // EOF, representing for the client's disconnection. 
             printf("the client %d disconnected.\n", conn_sockfd);
@@ -63,10 +65,20 @@ void Connection::reading_echo() {
                 when the current receiving is over.
             */
             if(errno == EINTR) {
-                // the client intrrupt normally.
+                // the client interrupt normally.
+                printf("continue reading.\n");
                 continue;
             } else if((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                 // the client finished its sending, or the receiving is over.
+                work_sendbuffer->buf_copy(work_recvbuffer);
+                printf("client %d: %s\n", conn_sockfd, work_recvbuffer->c_str());
+                ssize_t write_bytes = send(conn_sockfd, work_sendbuffer->c_str(), work_sendbuffer->buf_size(), 0);
+                if(write_bytes == -1) {
+                    errif(true, "write buffer");
+                    break;
+                }
+                work_recvbuffer->buf_clear();
+                work_sendbuffer->buf_clear();
                 break;
             }
         } else {

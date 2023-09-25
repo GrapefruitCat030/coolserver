@@ -6,6 +6,7 @@ class Socket;
 class Inetaddress;
 class Eventloop;
 class Channel;
+class Buffer;
 
 class Connection {
 private:
@@ -18,6 +19,10 @@ private:
 
     // disconnect. Callback the Server function and kill itself.
     std::function<void()> del_connection_cb;
+    
+    // The working buffer.
+    Buffer *work_recvbuffer;
+    Buffer *work_sendbuffer;
 public:
     // _loop + addr --> a connection!!
     Connection(Eventloop *_loop, Socket *socket, Inetaddress *addr);
