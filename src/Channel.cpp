@@ -37,7 +37,8 @@ void Channel::set_callbackfunc(std::function<void()> cb) {
     callback_func = cb;
 }
 void Channel::handle_events() {
-    callback_func();   
+    // callback_func();   
+    loop->create_task(callback_func);
 }
 
 /* Register the events. */

@@ -1,6 +1,7 @@
 CXX = g++
 # 添加任何必要的编译选项
 CFLAGS = -Wall -g
+LDFLAGS = -lpthread
 SANITISER = 
 
 # 源文件和目标文件列表
@@ -15,11 +16,11 @@ all: $(TARGETS)
 
 # test-server的编译规则
 test-server: $(OBJS) $(OBJDIR)/test-server.o
-	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-server.o -o $@
+	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-server.o -o $@ $(LDFLAGS) 
 
 # test-client的编译规则
 test-client: $(OBJS) $(OBJDIR)/test-client.o
-	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-client.o -o $@
+	$(CXX) $(CFLAGS) $(SANITISER) $(OBJS) $(OBJDIR)/test-client.o -o $@ $(LDFLAGS) 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CFLAGS) -c $< -o $@

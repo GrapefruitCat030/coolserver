@@ -20,6 +20,7 @@ Connection::Connection(Eventloop *_loop, Socket *socket, Inetaddress *addr):\
     // 将connection socket注册进入loop请求队列，以Channel形式
     conn_chan = new Channel(conn_socket->getfd(), server_loop);
     std::function<void()> cbfunc = std::bind(&Connection::reading_echo, this);
+    // std::function<void()> cbfunc = std::bind(&Connection::sleep_well, this);
     conn_chan->set_callbackfunc(cbfunc); 
     conn_chan->watch_readingET();
 
@@ -43,7 +44,10 @@ void Connection::set_delconn_cb(std::function<void()> cb) {
 void Connection::reading_echo() {
     int conn_sockfd = conn_socket->getfd();
     char temp_buf[BUFFER_SIZE];
-    
+
+    // printf("ok i got it.(fd %d) sleep a while.\n", this->conn_socket->getfd());
+    // sleep(10);
+
     while(true) {
         memset(temp_buf, 0, sizeof(temp_buf));
         
@@ -87,4 +91,8 @@ void Connection::reading_echo() {
     }
 }
 
-
+void Connection::sleep_well() {
+    printf("client %d begin sleep now!\n", this->conn_socket->getfd());
+    sleep(10);
+    printf("client %d awake!\n", this->conn_socket->getfd());
+}

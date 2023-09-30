@@ -38,7 +38,7 @@ public:
         Offer binding for the acpt Channel.
     */
     void reading_echo();
-
+    void sleep_well();
     /*
         setting the valiable.
         Called in Server after the Acceptor instance created.

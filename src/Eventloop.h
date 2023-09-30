@@ -1,4 +1,5 @@
 #pragma once
+#include<functional>
 
 /*
     Eventloop类的作用：
@@ -9,13 +10,15 @@
 
 class Epoll;
 class Channel;
+class Threadpool;
 
 class Eventloop {
 private:
     /* data */
     Epoll *loop_ep;
     bool   loop_over;
-
+    // Threads pool
+    Threadpool *threads_pool;
 public:
     Eventloop();
     ~Eventloop();
@@ -27,4 +30,6 @@ public:
     // 而是由Channel在各种注册行为时进行调用。
     void channel_update(Channel *);
 
+    // 将Channel上的事件放到线程池处理
+    void create_task(std::function<void()> cb);
 };
