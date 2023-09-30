@@ -1,3 +1,6 @@
+# Author: GFC33
+
+
 CXX = g++
 # 添加任何必要的编译选项
 CFLAGS = -Wall -g
