@@ -16,7 +16,8 @@ Acceptor::Acceptor(Eventloop *_loop): server_loop(_loop) {
     acpt_chan = new Channel(server_socket->getfd(), server_loop);
     std::function<void()> chan_tempcb = std::bind(&Acceptor::accept_connection, this);
     acpt_chan->set_callbackfunc(chan_tempcb);
-    acpt_chan->watch_readingLT(); 
+    acpt_chan->set_use_tpool(false);
+    acpt_chan->register_readingLT(); 
 }
 Acceptor::~Acceptor() {
     delete this->server_socket;

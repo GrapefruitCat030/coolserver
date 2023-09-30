@@ -28,37 +28,39 @@ class Channel {
 private:
     /* Data */
     int fd;
+    Eventloop *loop;
     uint32_t evop;
     uint32_t ready_evop;
     std::function<void()> callback_func; // 函数更新于注册时
 
-    Eventloop *loop;
     bool inep_flag;
 
     // set new events option and return the old option. 
     uint32_t update_Evop(uint32_t evop);
 
+    // use threads pool or not
+    bool use_tpool;
 public:
     Channel(int fd, Eventloop *loop);
     ~Channel();
 
-    int get_fd();
 
+    int get_fd();
+    bool is_inEP();
     uint32_t get_Evop();
     uint32_t get_Reop();
 
-    // set new ready events option and return the old option.
+    // Used by epoll function. Inform the ready events option and return the old option.
     uint32_t set_Reop(uint32_t reop);
-
-    bool is_inEP();
     void set_inEP(); 
+    void set_use_tpool(bool flag);
     
     void set_callbackfunc(std::function<void()> cb);    
     void handle_events();
 
     /* Register the events. */
     // 注册LT读准备事件
-    void watch_readingLT();  
+    void register_readingLT();  
     // 注册ET读准备事件
-    void watch_readingET(); 
+    void register_readingET(); 
 };

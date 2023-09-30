@@ -33,7 +33,7 @@ $(OBJDIR)/test-client.o: test-client.cpp
 
 # 清理规则
 clean:
-	rm -f $(OBJS)  $(OBJDIR)/*.o $(TARGET)
+	rm -f $(OBJS)  $(OBJDIR)/*.o $(TARGETS)
 
 
 # 伪目标，用于防止与同名文件冲突

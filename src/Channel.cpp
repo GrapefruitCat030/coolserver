@@ -3,32 +3,38 @@
 #include "Eventloop.h"
 
 Channel::Channel(int _fd, Eventloop *_loop): \
-                fd(_fd), loop(_loop) {
-                evop       = 0;
-                ready_evop = 0;
-                inep_flag  = false;
+                fd(_fd), loop(_loop),\
+                evop(0), ready_evop(0), \
+                inep_flag(false),\
+                use_tpool(false) {
 }
 Channel::~Channel() {}
 
 uint32_t Channel::update_Evop(uint32_t evop) {
     uint32_t old_op = get_Evop();
-    this->evop = evop;
+    this->evop = old_op | evop;
     loop->channel_update(this);
     return old_op;
 }
 
+
 bool Channel::is_inEP()  { return inep_flag; }
-void Channel::set_inEP() { inep_flag = true; }
-
 int Channel::get_fd() { return fd;}
-
-uint32_t Channel::get_Evop() { return evop;      }
+uint32_t Channel::get_Evop() { return evop;}
 uint32_t Channel::get_Reop() { return ready_evop;}
+
+/* Setting something. */
+
+void Channel::set_inEP() { inep_flag = true; }
 
 uint32_t Channel::set_Reop(uint32_t reop) {
     uint32_t old_op = get_Reop();
     this->ready_evop = reop;
     return old_op;
+}
+
+void Channel::set_use_tpool(bool flag) {
+    use_tpool = flag;
 }
 
 /* Set the callback function. */
@@ -38,14 +44,17 @@ void Channel::set_callbackfunc(std::function<void()> cb) {
 }
 void Channel::handle_events() {
     // callback_func();   
-    loop->create_task(callback_func);
+    if(use_tpool)
+        loop->create_task(callback_func);
+    else 
+        callback_func();
 }
 
 /* Register the events. */
 
-void Channel::watch_readingLT() { 
+void Channel::register_readingLT() { 
     update_Evop(EPOLLIN);
 }
-void Channel::watch_readingET() {
+void Channel::register_readingET() {
     update_Evop(EPOLLIN | EPOLLET);
 }

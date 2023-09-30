@@ -22,7 +22,8 @@ Connection::Connection(Eventloop *_loop, Socket *socket, Inetaddress *addr):\
     std::function<void()> cbfunc = std::bind(&Connection::reading_echo, this);
     // std::function<void()> cbfunc = std::bind(&Connection::sleep_well, this);
     conn_chan->set_callbackfunc(cbfunc); 
-    conn_chan->watch_readingET();
+    conn_chan->set_use_tpool(true);
+    conn_chan->register_readingET();
 
 }
 Connection::~Connection() {
