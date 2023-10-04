@@ -2,9 +2,14 @@
 
 #include<queue>
 #include<vector>
-#include<functional>
 #include<thread>
 #include<condition_variable>
+
+#include<utility>
+#include<memory>
+
+#include<functional>
+#include<future>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -36,12 +41,29 @@ public:
     Threadpool(int threads_numb = core_numb);
     ~Threadpool();
 
-    void enq_task(std::function<void()>);
-
-
-
+    template<typename F, typename... Args>
+    decltype(auto) enq_task(F&& foo, Args&&... args);
 };
 
 
+template<typename F, typename... Args>
+decltype(auto) Threadpool::enq_task(F&& foo, Args&&... args) {
+    using ReturnType = typename std::result_of<F(Args...)>::type; 
+
+    auto todo_task = std::make_shared<std::packaged_task<ReturnType()>>(std::bind(std::forward<F>(foo), std::forward<Args>(args)...));
+    std::future<ReturnType> res = todo_task->get_future(); 
+    {
+        std::unique_lock<std::mutex> enq_lock(queue_mtx);
+        if(pool_stop) 
+            throw std::runtime_error("pool stop:task adding still.");
+        // add the task into tasks queue.
+        tasks.emplace([todo_task](){
+            (*todo_task)();
+        }); 
+    }
+    queue_cv.notify_all();
+
+    return res;
+}
 
 

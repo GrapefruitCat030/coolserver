@@ -1,6 +1,8 @@
 #include "Threadpool.h"
 #include <assert.h>
 
+
+
 #define JUMPOUT_CONDITION(X) [this](){return (X);}
 
 Threadpool::Threadpool(int threads_numb) {
@@ -17,8 +19,8 @@ Threadpool::Threadpool(int threads_numb) {
                         else assert(0);    
                     }  
 
-                    // extract the task from tasks queue.
-                    temp_task = tasks.front();
+                    // extract the task from tasks queue. Perfect Forwarding !!!
+                    temp_task = std::move(tasks.front());
                     tasks.pop();
                 }
                 temp_task();
@@ -28,7 +30,6 @@ Threadpool::Threadpool(int threads_numb) {
 }
 
 Threadpool::~Threadpool() {
-
     {
         std::unique_lock<std::mutex> temp_lock(queue_mtx);
         pool_stop = true;
@@ -37,20 +38,5 @@ Threadpool::~Threadpool() {
     for(auto &t: pool) {
         if(t.joinable())
             t.join();
-    }
-
-
-}
-
-
-void Threadpool::enq_task(std::function<void()> todo_task) {
-    {
-        std::unique_lock<std::mutex> enq_lock(queue_mtx);
-        if(pool_stop) 
-            assert(0);
-        // add the task into tasks queue.
-        tasks.emplace(todo_task); 
-        
-        queue_cv.notify_all();
     }
 }
